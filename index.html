@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSSG — Online Object-Centric Gaussian Splatting Scene Graphs</title>
+<meta name="description" content="GSSG builds a hierarchical, open-vocabulary 3D scene graph online on an object-centric 3D Gaussian Splatting map and makes it queryable through semantic, spatial, and topological indices. Runs onboard a mobile robot.">
+<link rel="canonical" href="https://gssg-project.github.io/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=ff5b5181">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=9ca86a66">
+<!-- Open Graph / Twitter / WhatsApp / iMessage previews -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GSSG">
+<meta property="og:title" content="GSSG — Online Object-Centric Gaussian Splatting Scene Graphs">
+<meta property="og:description" content="A hierarchical, open-vocabulary 3D scene graph built online on a 3D Gaussian Splatting map and made queryable through semantic, spatial, and topological indices. Runs onboard a mobile robot.">
+<meta property="og:url" content="https://gssg-project.github.io/">
+<meta property="og:image" content="https://gssg-project.github.io/static/share.png">
+<meta property="og:image:secure_url" content="https://gssg-project.github.io/static/share.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GSSG: a scene graph built on a Gaussian Splatting map with semantic, spatial, and topological indices">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GSSG — Online Object-Centric Gaussian Splatting Scene Graphs">
+<meta name="twitter:description" content="Open-vocabulary 3D scene graphs on a 3DGS map, built online and made queryable through three indices. Runs onboard a mobile robot.">
+<meta name="twitter:image" content="https://gssg-project.github.io/static/share.png">
+<meta name="twitter:image:alt" content="GSSG: a scene graph built on a Gaussian Splatting map with semantic, spatial, and topological indices">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"GSSG — Online Object-Centric Gaussian Splatting Scene Graphs","url":"https://gssg-project.github.io/","description":"GSSG builds a hierarchical, open-vocabulary 3D scene graph online on an object-centric 3D Gaussian Splatting map and makes it queryable through semantic, spatial, and topological indices.","image":"https://gssg-project.github.io/static/share.png","about":{"@type":"ScholarlyArticle","name":"GSSG: Online Object-Centric Gaussian Splatting Scene Graphs with Multi-Modal Indexing for Scalable Open-Vocabulary Querying"}}
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-J8HTKEJXTM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-J8HTKEJXTM');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="static/style.css?v=fc01cf14">
+</head>
+<body>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap row">
+    <a class="brand" href="#top"><img src="static/img/mark.svg?v=ff5b5181" width="16" height="16" alt="">GSSG</a>
+    <div class="links">
+      <a href="#video">Video</a>
+      <a href="#method">Grounding</a>
+      <a href="#robot">Robot</a>
+      <a href="#compare">Comparisons</a>
+      <a href="#annexes">Ablations</a>
+      <a href="#paper">Paper</a>
+      <a href="#references">References</a>
+    </div>
+  </div>
+</nav>
+
+<header id="top" class="wrap hero">
+  <h1>GSSG: Online Object-Centric Gaussian Splatting Scene Graphs with Multi-Modal Indexing for Scalable Open-Vocabulary Querying</h1>
+  <p class="sub">A hierarchical, open-vocabulary 3D scene graph built online on an object-centric 3D Gaussian Splatting map, and made queryable through semantic, spatial, and topological indices.</p>
+  <p class="authors">Author names omitted for anonymous review.</p>
+  <div class="actions">
+    <!-- Replace the pending <span> with <a class="btn" href="..."> when the paper is available. -->
+    <span class="btn pending"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M4 1.5h5.5L13 5v9.5H4z M9.5 1.5V5H13 M6 8h4.5 M6 10.5h4.5"/></svg>Paper <span class="tag">pending</span></span>
+    <a class="btn" href="#video"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="currentColor" d="M6.6 5.4v5.2L10.8 8z"/></svg>Video <span class="tag">pending</span></a>
+    <a class="btn" href="https://github.com/GSSG-Project/GSSG"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<figure class="fig" id="fig1">
+  <div class="plate pad"><img src="static/img/fig1_teaser.svg?v=542fcb0d" width="1600" height="611" alt="Overview: a hierarchical scene graph (floor, room, object nodes) built online on a Gaussian-splatting map, and three retrieval indices composed by a language-model planner to ground a complex instruction." loading="eager"></div>
+  <figcaption><b>Fig. 1.</b> GSSG builds the scene graph incrementally on top of the map. Direct queries are resolved against a single index; complex instructions are composed over all three by a language-model task planner, without rebuilding the map.</figcaption>
+</figure>
+
+<section id="summary">
+  <p class="lead">Robots that act on language need a map that is precise, open-vocabulary, efficient to query, and built online. GSSG addresses the two costs that make this hard at scale on a 3DGS map: <b>memory</b>, by spending Gaussians on objects rather than walls and floors and paging out-of-view cells to RAM; and <b>query latency</b>, by decoupling retrieval into three indices. A new task changes the query, not the map.</p>
+  <div class="tiles">
+    <div class="tile"><p class="num">0.46 &middot; 0.50</p><p class="what">OpenLex3D synonym score, Replica &middot; HM3D. Highest among the compared methods, online or offline.</p><p class="src"><a href="#tab1">Table I</a></p></div>
+    <div class="tile"><p class="num">81% vs. 25%</p><p class="what">Spatial-relational queries grounded within 1&nbsp;m, GSSG vs. the task-driven baseline Clio.</p><p class="src"><a href="#tab3">Table III</a></p></div>
+    <div class="tile"><p class="num">Online &amp; onboard</p><p class="what">Built while the robot moves, on a Jetson AGX Thor; the map is queryable as it is built and grows beyond GPU memory.</p><p class="src"><a href="#robot">Robot</a> &middot; <a href="#fig3">Fig. 3</a></p></div>
+  </div>
+</section>
+
+<section id="video" class="rule">
+  <p class="kicker">Video</p>
+  <!-- When the video is hosted, set data-embed to the embed URL (e.g. https://www.youtube-nocookie.com/embed/VIDEO_ID); clicking then expands and plays. -->
+  <button class="video" type="button" data-video data-embed="" aria-expanded="false" aria-label="Video (to be added); click to expand">
+    <span class="video-face"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="currentColor" d="M6.6 5.4v5.2L10.8 8z"/></svg><span class="t">Video</span><span class="n">to be added</span></span>
+  </button>
+</section>
+
+<section id="method" class="rule">
+  <p class="kicker">Query grounding</p>
+  <details class="pl-card" id="planner-card">
+    <summary><span class="srow">
+      <svg class="pl-card-art" viewBox="0 0 320 160" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+        <defs><linearGradient id="fadeL" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient><mask id="fadeM"><rect width="320" height="160" fill="url(#fadeL)"/></mask></defs>
+        <g mask="url(#fadeM)"><g stroke="#8a93a0" stroke-width="1" fill="none" opacity="0.7"><line x1="39.6" y1="35.7" x2="19.1" y2="33.0"/><line x1="41.4" y1="39.6" x2="32.5" y2="58.2"/><line x1="57.8" y1="93.1" x2="78.1" y2="91.9"/><line x1="254.2" y1="111.8" x2="262.2" y2="138.2"/><line x1="12.0" y1="69.4" x2="7.2" y2="73.9"/><line x1="305.0" y1="110.5" x2="279.8" y2="127.7"/><line x1="171.5" y1="58.5" x2="185.6" y2="73.0"/><line x1="41.4" y1="39.6" x2="56.4" y2="37.1"/><line x1="56.4" y1="37.1" x2="66.8" y2="26.0"/><line x1="262.2" y1="138.2" x2="279.8" y2="127.7"/><line x1="7.2" y1="73.9" x2="1.3" y2="67.0"/><line x1="216.4" y1="8.6" x2="196.5" y2="23.8"/><line x1="168.1" y1="140.0" x2="175.8" y2="141.3"/><line x1="39.6" y1="35.7" x2="46.2" y2="18.8"/><line x1="233.4" y1="46.1" x2="263.0" y2="45.5"/><line x1="274.7" y1="46.3" x2="263.0" y2="45.5"/><line x1="19.1" y1="33.0" x2="19.9" y2="10.8"/><line x1="103.6" y1="24.1" x2="108.8" y2="8.4"/><line x1="135.8" y1="132.3" x2="125.1" y2="139.4"/><line x1="19.4" y1="112.2" x2="8.2" y2="139.9"/><line x1="18.6" y1="81.2" x2="25.8" y2="71.9"/><line x1="53.8" y1="18.7" x2="66.8" y2="26.0"/><line x1="204.5" y1="59.6" x2="217.7" y2="68.4"/><line x1="312.4" y1="7.5" x2="306.5" y2="24.1"/><line x1="22.4" y1="14.5" x2="19.9" y2="10.8"/><line x1="18.9" y1="122.9" x2="8.2" y2="139.9"/><line x1="46.2" y1="18.8" x2="53.8" y2="18.7"/><line x1="171.5" y1="58.5" x2="145.0" y2="48.0"/><line x1="200.8" y1="151.6" x2="207.1" y2="158.9"/><line x1="200.8" y1="151.6" x2="175.8" y2="141.3"/><line x1="100.5" y1="93.7" x2="118.2" y2="90.6"/><line x1="244.7" y1="91.7" x2="222.5" y2="95.1"/><line x1="125.1" y1="139.4" x2="114.8" y2="141.5"/><line x1="207.1" y1="158.9" x2="175.8" y2="141.3"/><line x1="305.0" y1="110.5" x2="287.9" y2="124.8"/><line x1="12.5" y1="106.9" x2="18.9" y2="122.9"/><line x1="118.2" y1="90.6" x2="125.6" y2="63.8"/><line x1="133.8" y1="121.1" x2="151.7" y2="106.3"/><line x1="254.2" y1="111.8" x2="244.7" y2="91.7"/><line x1="123.5" y1="107.0" x2="118.2" y2="90.6"/><line x1="100.5" y1="93.7" x2="78.1" y2="91.9"/><line x1="208.3" y1="11.6" x2="175.3" y2="10.0"/><line x1="48.6" y1="78.2" x2="25.8" y2="71.9"/><line x1="145.0" y1="48.0" x2="125.6" y2="63.8"/><line x1="12.5" y1="106.9" x2="33.1" y2="101.5"/><line x1="98.7" y1="130.6" x2="114.8" y2="141.5"/><line x1="39.6" y1="35.7" x2="56.4" y2="37.1"/><line x1="184.7" y1="63.5" x2="185.6" y2="73.0"/><line x1="135.8" y1="132.3" x2="133.8" y2="121.1"/><line x1="19.4" y1="112.2" x2="18.9" y2="122.9"/><line x1="133.8" y1="121.1" x2="123.5" y2="107.0"/><line x1="313.7" y1="18.9" x2="306.5" y2="24.1"/><line x1="208.3" y1="11.6" x2="216.4" y2="8.6"/><line x1="18.6" y1="81.2" x2="7.2" y2="73.9"/><line x1="89.1" y1="66.4" x2="74.7" y2="77.6"/><line x1="184.7" y1="63.5" x2="188.5" y2="42.0"/><line x1="268.8" y1="151.1" x2="262.2" y2="138.2"/><line x1="98.7" y1="130.6" x2="125.1" y2="139.4"/><line x1="185.6" y1="73.0" x2="165.0" y2="98.8"/><line x1="188.5" y1="42.0" x2="196.5" y2="23.8"/><line x1="19.4" y1="112.2" x2="33.1" y2="101.5"/><line x1="208.3" y1="11.6" x2="196.5" y2="23.8"/><line x1="312.4" y1="7.5" x2="313.7" y2="18.9"/><line x1="151.7" y1="106.3" x2="165.0" y2="98.8"/><line x1="280.2" y1="50.2" x2="263.0" y2="45.5"/><line x1="287.9" y1="124.8" x2="279.8" y2="127.7"/><line x1="25.8" y1="71.9" x2="32.5" y2="58.2"/><line x1="103.6" y1="24.1" x2="66.8" y2="26.0"/><line x1="175.3" y1="10.0" x2="196.5" y2="23.8"/><line x1="19.9" y1="10.8" x2="0.1" y2="24.2"/><line x1="66.8" y1="26.0" x2="108.8" y2="8.4"/><line x1="135.8" y1="132.3" x2="168.1" y2="140.0"/><line x1="217.7" y1="68.4" x2="222.5" y2="95.1"/><line x1="268.8" y1="151.1" x2="279.8" y2="127.7"/><line x1="57.8" y1="93.1" x2="48.6" y2="78.2"/><line x1="12.5" y1="106.9" x2="19.4" y2="112.2"/><line x1="12.0" y1="69.4" x2="25.8" y2="71.9"/><line x1="12.0" y1="69.4" x2="1.3" y2="67.0"/><line x1="217.7" y1="68.4" x2="233.4" y2="46.1"/><line x1="89.1" y1="66.4" x2="80.7" y2="55.6"/><line x1="19.1" y1="33.0" x2="0.1" y2="24.2"/><line x1="39.6" y1="35.7" x2="41.4" y2="39.6"/><line x1="22.4" y1="14.5" x2="19.1" y2="33.0"/><line x1="74.7" y1="77.6" x2="80.7" y2="55.6"/><line x1="184.7" y1="63.5" x2="204.5" y2="59.6"/><line x1="171.5" y1="58.5" x2="184.7" y2="63.5"/><line x1="78.1" y1="91.9" x2="74.7" y2="77.6"/><line x1="274.7" y1="46.3" x2="280.2" y2="50.2"/></g><g fill="#8a93a0"><circle cx="103.6" cy="24.1" r="3.0"/><circle cx="208.3" cy="11.6" r="3.5"/><circle cx="171.5" cy="58.5" r="2.0"/><circle cx="18.6" cy="81.2" r="2.0"/><circle cx="12.0" cy="69.4" r="3.5"/><circle cx="22.4" cy="14.5" r="3.5"/><circle cx="135.8" cy="132.3" r="3.5"/><circle cx="39.6" cy="35.7" r="3.5"/><circle cx="200.8" cy="151.6" r="3.0"/><circle cx="184.7" cy="63.5" r="2.0"/><circle cx="312.4" cy="7.5" r="2.5"/><circle cx="274.7" cy="46.3" r="2.0"/><circle cx="46.2" cy="18.8" r="3.0"/><circle cx="98.7" cy="130.6" r="3.0"/><circle cx="57.8" cy="93.1" r="3.5"/><circle cx="204.5" cy="59.6" r="2.5"/><circle cx="175.3" cy="10.0" r="2.0"/><circle cx="19.1" cy="33.0" r="2.5"/><circle cx="217.7" cy="68.4" r="3.0"/><circle cx="100.5" cy="93.7" r="2.5"/><circle cx="145.0" cy="48.0" r="2.0"/><circle cx="254.2" cy="111.8" r="3.0"/><circle cx="78.1" cy="91.9" r="2.0"/><circle cx="168.1" cy="140.0" r="3.0"/><circle cx="233.4" cy="46.1" r="3.0"/><circle cx="313.7" cy="18.9" r="2.5"/><circle cx="133.8" cy="121.1" r="3.0"/><circle cx="48.6" cy="78.2" r="2.5"/><circle cx="12.5" cy="106.9" r="3.0"/><circle cx="244.7" cy="91.7" r="2.5"/><circle cx="280.2" cy="50.2" r="2.5"/><circle cx="222.5" cy="95.1" r="2.5"/><circle cx="185.6" cy="73.0" r="3.5"/><circle cx="268.8" cy="151.1" r="2.5"/><circle cx="151.7" cy="106.3" r="2.5"/><circle cx="19.4" cy="112.2" r="3.5"/><circle cx="207.1" cy="158.9" r="3.0"/><circle cx="263.0" cy="45.5" r="2.0"/><circle cx="123.5" cy="107.0" r="2.0"/><circle cx="7.2" cy="73.9" r="3.0"/><circle cx="53.8" cy="18.7" r="3.5"/><circle cx="18.9" cy="122.9" r="3.0"/><circle cx="41.4" cy="39.6" r="2.5"/><circle cx="125.1" cy="139.4" r="3.0"/><circle cx="25.8" cy="71.9" r="3.5"/><circle cx="175.8" cy="141.3" r="3.0"/><circle cx="262.2" cy="138.2" r="3.0"/><circle cx="89.1" cy="66.4" r="2.0"/><circle cx="114.8" cy="141.5" r="2.5"/><circle cx="306.5" cy="24.1" r="2.0"/><circle cx="56.4" cy="37.1" r="2.5"/><circle cx="74.7" cy="77.6" r="3.5"/><circle cx="188.5" cy="42.0" r="2.5"/><circle cx="1.3" cy="67.0" r="3.0"/><circle cx="118.2" cy="90.6" r="2.5"/><circle cx="305.0" cy="110.5" r="3.5"/><circle cx="165.0" cy="98.8" r="2.0"/><circle cx="216.4" cy="8.6" r="3.5"/><circle cx="287.9" cy="124.8" r="3.0"/><circle cx="279.8" cy="127.7" r="2.0"/><circle cx="125.6" cy="63.8" r="2.0"/><circle cx="33.1" cy="101.5" r="3.5"/><circle cx="19.9" cy="10.8" r="2.5"/><circle cx="66.8" cy="26.0" r="3.5"/><circle cx="108.8" cy="8.4" r="2.5"/><circle cx="0.1" cy="24.2" r="3.5"/><circle cx="32.5" cy="58.2" r="3.0"/><circle cx="8.2" cy="139.9" r="2.0"/><circle cx="196.5" cy="23.8" r="3.5"/><circle cx="80.7" cy="55.6" r="3.5"/></g></g>
+      </svg>
+      <span class="pl-card-t">How a complex instruction is grounded</span>
+      <span class="pl-card-d">Watch the LLM task planner ground an instruction from the simulated evaluation with the three indices.</span>
+      <span class="pl-card-cta" data-open="Open" data-close="Close"><span class="cta-t">Open</span><svg class="cta-arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </span></summary>
+  <div class="planner plate" data-fs data-planner aria-label="Illustration: a complex instruction composed over the three indices">
+    <div class="pl-grid">
+      <div class="pl-left">
+        <div class="pl-user"><span class="bubble mono pl-q"></span></div>
+        <div class="pl-llm">
+          <div class="pl-llm-head"><svg class="star llm" viewBox="0 0 30 30" aria-hidden="true"><path fill="none" stroke="#656566" stroke-width="2.2" stroke-linejoin="round" d="M5 6h20v13H14l-6 5v-5H5z"/><path fill="#656566" d="M19 9l1.1 2.9L23 13l-2.9 1.1L19 17l-1.1-2.9L15 13l2.9-1.1z"/></svg><span class="llm-badge">LLM task planner</span><span class="pl-think"><i></i><i></i><i></i><span class="pl-think-t">reasoning</span></span></div>
+          <ol class="pl-steps">
+            <li class="pl-step" data-step="1"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF2D55" d="M15 3L28 27H2Z"/></svg><span class="call mono">find_room("living room")</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="res"><span class="obj room "><span class="nm">living room</span><span class="id">3</span></span></span></li>
+            <li class="pl-step" data-step="2"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF8D28" d="M14.5 0L18.416 10.5837L29 14.5L18.416 18.4163L14.5 29L10.584 18.4163L0 14.5L10.584 10.5837Z"/></svg><span class="call mono">search("sofa", room=<span class="obj room "><span class="nm">living room</span><span class="id">3</span></span>)</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="res"><span class="obj " data-obj="sofa2"><span class="nm">sofa</span><span class="id">2</span></span></span></li>
+            <li class="pl-step" data-step="3"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF8D28" d="M14.5 0L18.416 10.5837L29 14.5L18.416 18.4163L14.5 29L10.584 18.4163L0 14.5L10.584 10.5837Z"/></svg><span class="call mono">search("pillow")</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="res"><span class="obj " data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span><span class="obj " data-obj="pillow11"><span class="nm">pillow</span><span class="id">11</span></span><span class="obj " data-obj="pillow19"><span class="nm">pillow</span><span class="id">19</span></span></span></li>
+            <li class="pl-step" data-step="4"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><rect x="4" y="4" width="22" height="22" rx="3" fill="#CB30E0"/></svg><span class="call mono">spatial([<span class="obj " data-obj="sofa2"><span class="nm">sofa</span><span class="id">2</span></span>], ON)</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="res"><span class="obj " data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span></span></li>
+            <li class="pl-step" data-step="5"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="10" fill="none" stroke="#656566" stroke-width="2.4"/><circle cx="15" cy="15" r="3.2" fill="#656566"/><path d="M15 1v6M15 23v6M1 15h6M23 15h6" stroke="#656566" stroke-width="2.4" stroke-linecap="round"/></svg><span class="call mono">navigate_to(<span class="obj " data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span>)</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="res"><span class="ros">navigation stack</span></span></li>
+          </ol>
+        </div>
+      </div>
+      <div class="pl-right">
+        <div class="idx idx-topo"><div class="idx-h"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF2D55" d="M15 3L28 27H2Z"/></svg><span>topological</span><span class="idx-sub">room nodes, room &rsaquo; object membership</span></div>
+          <div class="idx-body"><div class="tree"><span class="branch"><span class="node roomn">living room</span><span class="idn">room 3</span><span class="leaves"><span class="obj keep" data-obj="sofa2"><span class="nm">sofa</span><span class="id">2</span></span></span><span class="mark ok">&#10003;</span></span><span class="branch dim"><span class="node roomn">study</span><span class="idn">room 5</span><span class="leaves"><span class="obj drop" data-obj="sofa14"><span class="nm">sofa</span><span class="id">14</span></span></span><span class="mark no">&#10005;</span></span></div></div></div>
+        <div class="idx idx-sem"><div class="idx-h"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF8D28" d="M14.5 0L18.416 10.5837L29 14.5L18.416 18.4163L14.5 29L10.584 18.4163L0 14.5L10.584 10.5837Z"/></svg><span>semantic index</span><span class="idx-sub">HNSW over CLIP object embeddings</span></div>
+          <div class="idx-body"><div class="scan"><span class="scan-q mono"></span><span class="scan-bar"><i></i></span></div>
+            <div class="pool pool-sem"><span class="obj g1" data-obj="sofa2"><span class="nm">sofa</span><span class="id">2</span></span><span class="obj g1 drop2" data-obj="sofa14"><span class="nm">sofa</span><span class="id">14</span></span><span class="obj g3" data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span><span class="obj g3" data-obj="pillow11"><span class="nm">pillow</span><span class="id">11</span></span><span class="obj g3" data-obj="pillow19"><span class="nm">pillow</span><span class="id">19</span></span></div></div></div>
+        <div class="idx idx-spa"><div class="idx-h"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><rect x="4" y="4" width="22" height="22" rx="3" fill="#CB30E0"/></svg><span>spatial index</span><span class="idx-sub">R-tree &middot; near, on, inside, above, below</span></div>
+          <div class="idx-body"><div class="map"><span class="anchor"><span class="obj " data-obj="sofa2"><span class="nm">sofa</span><span class="id">2</span></span><span class="radius"></span><span class="rlbl">on</span></span><span class="cand c-near"><span class="obj " data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span><em>on top</em></span><span class="cand c-far"><span class="obj " data-obj="pillow11"><span class="nm">pillow</span><span class="id">11</span></span><em>elsewhere</em></span><span class="cand c-far"><span class="obj " data-obj="pillow19"><span class="nm">pillow</span><span class="id">19</span></span><em>elsewhere</em></span></div></div></div>
+        <div class="idx idx-nav"><div class="idx-h"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="10" fill="none" stroke="#656566" stroke-width="2.4"/><circle cx="15" cy="15" r="3.2" fill="#656566"/><path d="M15 1v6M15 23v6M1 15h6M23 15h6" stroke="#656566" stroke-width="2.4" stroke-linecap="round"/></svg><span>navigation</span><span class="idx-sub">target handed to the robot</span></div>
+          <div class="idx-body"><span class="nav-line"><span class="track"><span class="nav-bot"></span></span><span class="nav-tgt"><span class="obj " data-obj="pillow7"><span class="nm">pillow</span><span class="id">7</span></span></span></span></div></div>
+      </div>
+    </div>
+    <div class="pl-ctrl" aria-label="Animation controls">
+      <button type="button" class="pl-btn pl-prev" aria-label="Previous step"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="pl-btn pl-play" aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" fill="currentColor"/></svg></button>
+      <button type="button" class="pl-btn pl-next" aria-label="Next step"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <span class="pl-dots" role="group" aria-label="Steps"></span>
+      <span class="pl-lbl"></span>
+    </div>
+    <div class="pl-legend"><span><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF8D28" d="M14.5 0L18.416 10.5837L29 14.5L18.416 18.4163L14.5 29L10.584 18.4163L0 14.5L10.584 10.5837Z"/></svg>semantic</span><span><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><rect x="4" y="4" width="22" height="22" rx="3" fill="#CB30E0"/></svg>spatial</span><span><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF2D55" d="M15 3L28 27H2Z"/></svg>topological</span><span><span class="obj sm"><span class="nm">object</span><span class="id">id</span></span> object node</span><span><span class="obj room"><span class="nm">room</span></span> room node</span></div>
+  </div>
+  </details>
+</section>
+<section id="robot" class="rule">
+  <p class="kicker">Real-world deployment</p>
+  <figure class="fig" id="fig4" style="margin-top:0">
+    <div class="demo plate" data-fs data-demo data-frames="65" data-src="static/demo/f{n}.jpg?v=3d91fda0">
+      <div class="demo-steps" aria-hidden="true">
+        <span class="step s1"><span class="bubble mono"></span></span>
+        <span class="step s2"><svg class="star" viewBox="0 0 30 30" aria-hidden="true"><path fill="#FF8D28" d="M14.5 0L18.416 10.5837L29 14.5L18.416 18.4163L14.5 29L10.584 18.4163L0 14.5L10.584 10.5837Z"/></svg><span class="k">semantic index</span><svg class="arr" viewBox="0 0 28 12" aria-hidden="true"><path d="M1 6h24M20 1.5 25.5 6 20 10.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="v mono">black bin</span></span>
+        <span class="step s3"><span class="k">navigate</span><span class="v mono">go_to(black bin)</span></span>
+        <span class="demo-ctrl"><button type="button" class="pl-btn d-play" aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" fill="currentColor"/></svg></button><button type="button" class="pl-btn d-restart" aria-label="Restart"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12.5 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span>
+      </div>
+      <div class="demo-stage">
+        <img class="demo-frame" src="static/demo/f00.jpg?v=a9e6c1a8" width="960" height="540" alt="The mobile robot driving from the doorway to a black bin in a lounge; frames from a single run." loading="lazy">
+        <div class="demo-target" style="left:24%; top:74.5%"><span class="ring"></span><span class="tag">black bin</span></div>
+        <span class="demo-time">t = 5 s</span>
+      </div>
+    </div>
+    <figcaption><b>Fig. 4.</b> A query-driven run on the Reachy&nbsp;2023 mobile robot (Jetson AGX Thor, ZED&nbsp;2i): the instruction is grounded through the semantic index and the robot navigates to the target (frames from a single run, t&nbsp;=&nbsp;5&ndash;37&nbsp;s). In these trials the robot reached every queried object without collision.</figcaption>
+  </figure>
+</section>
+<section id="compare" class="rule">
+  <p class="kicker">Metric layer and rooms vs. baselines</p>
+  <figure class="fig" id="fig5" style="margin-top:0">
+    <div class="grid2" style="align-items:start">
+      <div class="cmpbox">
+        <div class="chips" role="group" aria-label="Compare ground truth with">
+          <span class="chips-l">Ground truth vs.</span>
+          <button type="button" class="chip brand" data-swap="static/img/fig5_k0004_gssg.jpg" data-name="GSSG (3DGS)" aria-pressed="true"><img src="static/img/mark.svg?v=ff5b5181" width="10" height="10" alt="">GSSG</button>
+          <button type="button" class="chip" data-swap="static/img/fig5_k0004_hovsg.jpg" data-name="HOV-SG (point cloud)" aria-pressed="false">HOV-SG</button>
+          <button type="button" class="chip" data-swap="static/img/fig5_k0004_clio.jpg" data-name="Clio (mesh)" aria-pressed="false">Clio</button>
+        </div>
+        <div class="compare" data-compare style="aspect-ratio: 16 / 9">
+          <img class="cmp-a" src="static/img/fig5_k0004_gt.jpg?v=c0396d23" alt="Simulator ground-truth render.">
+          <img class="cmp-b" src="static/img/fig5_k0004_gssg.jpg?v=219abc0c" alt="Same view from a method's metric layer.">
+          <div class="cmp-bar"></div>
+          <span class="lbl l">Ground truth</span><span class="lbl r brand">GSSG (3DGS)</span>
+          <input type="range" min="0" max="100" value="50" id="cmp-metric" aria-label="Drag to compare ground truth and the selected method">
+        </div>
+      </div>
+      <div class="cmpbox">
+        <div class="chips" role="group" aria-label="Compare the top-down view with recovered rooms">
+          <span class="chips-l">Top-down view vs.</span>
+          <button type="button" class="chip brand" data-swap="static/img/fig6c_rooms_gssg.png" data-name="GSSG" aria-pressed="true"><img src="static/img/mark.svg?v=ff5b5181" width="10" height="10" alt="">GSSG</button>
+          <button type="button" class="chip" data-swap="static/img/fig6b_rooms_hovsg.png" data-name="HOV-SG" aria-pressed="false">HOV-SG</button>
+        </div>
+        <div class="compare" data-compare style="aspect-ratio: 16 / 9">
+          <img class="cmp-a" src="static/img/fig6a_rooms_gt.jpg?v=460fd559" alt="Top-down textured render of a multi-room house." style="object-fit: contain; background: #fff">
+          <img class="cmp-b" src="static/img/fig6c_rooms_gssg.png?v=e93575c1" alt="Floorplan recovered from the reconstructed map, one color per room." style="object-fit: contain; background: #fff">
+          <div class="cmp-bar"></div>
+          <span class="lbl l">Top-down view</span><span class="lbl r brand">GSSG</span>
+          <input type="range" min="0" max="100" value="50" id="cmp-rooms" aria-label="Drag to compare the top-down view and the recovered rooms">
+        </div>
+      </div>
+    </div>
+    <figcaption><b>Fig. 5.</b> Drag to compare. Left: the same simulated view rendered from each method&rsquo;s metric layer against the simulator ground truth. Right: the top-down view of a multi-room HM3D house against the rooms recovered from the same reconstructed map by the HOV-SG room module and by the splat-native segmenter, one color per room; nothing tuned per scene.</figcaption>
+  </figure>
+</section>
+<section id="annexes" class="rule">
+  <p class="kicker">Ablations &amp; runtime</p>
+
+  <details class="annex" open id="annex-a">
+    <summary><span class="srow"><span class="id">A</span><span class="t">Object-centric sampling</span><span class="hint">figure, table</span><span class="chev" aria-hidden="true"></span></span></summary>
+    <div class="body">
+      <div class="grid2" style="align-items:start">
+        <figure class="fig" style="margin-top:0">
+          <div class="compare" data-compare style="aspect-ratio: 1256 / 759">
+            <img class="cmp-a" src="static/img/fig3a_sampling_uniform.jpg?v=78f29bfe" alt="Rendered map with uniform sampling.">
+            <img class="cmp-b" src="static/img/fig3b_sampling_objectcentric.jpg?v=4eac7e00" alt="Rendered map with object-centric sampling.">
+            <div class="cmp-bar"></div>
+            <span class="lbl l">Uniform</span><span class="lbl r">Object-centric</span>
+            <input type="range" min="0" max="100" value="50" id="cmp-range-a" aria-label="Drag to compare uniform and object-centric sampling">
+          </div>
+          <figcaption><b>Fig. A1.</b> Same view; drag to compare. Object-centric sampling concentrates primitives on objects and keeps a sparser coverage of the background.</figcaption>
+        </figure>
+        <div class="tablewrap" style="margin-top:0">
+          <p class="tabcap"><b>Table A1.</b> Means over three Replica scenes and three HM3D houses. #G = Gaussians (M). Every objectness variant uses 20&ndash;25% fewer Gaussians at comparable recognition.</p>
+          <table class="data">
+            <thead><tr><th class="l" rowspan="2">Config</th><th colspan="3" class="grp-h">Replica</th><th colspan="3" class="grp-h">HM3D</th></tr><tr><th>#G</th><th><i>S</i>&nbsp;↑</th><th><i>I</i>&nbsp;↓</th><th>#G</th><th><i>S</i>&nbsp;↑</th><th><i>I</i>&nbsp;↓</th></tr></thead>
+            <tbody>
+              <tr class="blockend"><td class="l">Uniform</td><td>0.150</td><td>0.434</td><td>0.067</td><td>1.312</td><td>0.379</td><td>0.313</td></tr>
+              <tr><td class="l"><i>γ</i> = 1, <i>β</i> = 0.1</td><td>0.117</td><td><u>0.452</u></td><td>0.066</td><td><b>1.011</b></td><td><u>0.371</u></td><td>0.333</td></tr>
+              <tr class="ours"><td class="l"><i>γ</i> = 3, <i>β</i> = 0.1 (default)</td><td><b>0.112</b></td><td><b>0.459</b></td><td><b>0.047</b></td><td><u>1.027</u></td><td>0.366</td><td>0.316</td></tr>
+              <tr><td class="l"><i>γ</i> = 5, <i>β</i> = 0.1</td><td><u>0.113</u></td><td>0.401</td><td><u>0.059</u></td><td>1.036</td><td><b>0.375</b></td><td><u>0.311</u></td></tr>
+              <tr><td class="l"><i>γ</i> = 3, <i>β</i> = 0.3</td><td>0.115</td><td>0.384</td><td>0.060</td><td>1.048</td><td>0.365</td><td><b>0.308</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="annex" open id="annex-b">
+    <summary><span class="srow"><span class="id">B</span><span class="t">Embedding calibration</span><span class="hint">table</span><span class="chev" aria-hidden="true"></span></span></summary>
+    <div class="body">
+      <div class="tablewrap narrow" style="margin-top:0">
+        <p class="tabcap"><b>Table B1.</b> Embedding calibration. CLIP places image and text embeddings in different regions of the same space (the <em>modality gap</em> <span class="cite">[<a href="#ref-1">1</a>]</span>), so a text query ranks object embeddings with a systematic offset. The pass removes part of that offset without any training: every object embedding is shifted by the same vector <i>α</i>&thinsp;(<i>μ</i><sub>txt</sub> − <i>μ</i><sub>img</sub>) and re-normalized, where <i>μ</i><sub>img</sub> is the mean object embedding of the map and <i>μ</i><sub>txt</sub> is the mean text embedding of the 1000 ImageNet-1K class names <span class="cite">[<a href="#ref-2">2</a>]</span>, a vocabulary independent of the benchmark labels. Only a partial shift helps ranking <span class="cite">[<a href="#ref-3">3</a>, <a href="#ref-4">4</a>]</span>, so <i>α</i> = 0.25 is fixed for both datasets. It raises the synonym score and lowers the incorrect rate; the missing rate is unchanged because no objects are added.</p>
+        <table class="data">
+          <thead><tr><th class="l" rowspan="2">Dataset</th><th colspan="2" class="grp-h"><i>S</i>&nbsp;↑</th><th colspan="2" class="grp-h"><i>I</i>&nbsp;↓</th></tr><tr><th>base</th><th>+calib</th><th>base</th><th>+calib</th></tr></thead>
+          <tbody><tr><td class="l">Replica</td><td>0.44</td><td>0.46</td><td>0.08</td><td>0.06</td></tr><tr><td class="l">HM3D</td><td>0.42</td><td>0.50</td><td>0.29</td><td>0.21</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+
+  <details class="annex" open id="annex-c">
+    <summary><span class="srow"><span class="id">C</span><span class="t">Runtime and memory per device</span><span class="hint">table</span><span class="chev" aria-hidden="true"></span></span></summary>
+    <div class="body">
+      <div class="tablewrap narrow" style="margin-top:0">
+        <p class="tabcap"><b>Table C1.</b> Per-stage runtime and peak memory, each device in its deployed configuration. RTX cells: Replica / HM3D replay; Jetson: live ZED&nbsp;2i stream onboard the robot, with the camera SDK sharing the GPU.</p>
+        <table class="data">
+          <thead><tr><th class="l"></th><th>RTX 5090<br><span class="sub-h">ViT-H-14, replay</span></th><th>Jetson AGX Thor<br><span class="sub-h">MobileCLIP2-S0, live</span></th></tr></thead>
+          <tbody>
+            <tr><td class="l indent">Segmentation + CLIP (ms)</td><td>106 / 110</td><td>218</td></tr>
+            <tr><td class="l indent">Mapping optimize (ms)<sup>a</sup></td><td>59 / 49</td><td>894</td></tr>
+            <tr class="blockend"><td class="l indent">Association + graph (ms)</td><td>64 / 173</td><td>300</td></tr>
+            <tr><td class="l">Throughput (FPS)</td><td>5.7 / 4.6</td><td>0.87</td></tr>
+            <tr><td class="l">Peak GPU memory (GB)<sup>b</sup></td><td>5.3 / 11.6</td><td>2.8</td></tr>
+          </tbody>
+        </table>
+        <p class="tabnote"><sup>a</sup>Per optimize call, keyframe-gated. <sup>b</sup>PyTorch allocator only, excludes the TensorRT engine.</p>
+      </div>
+    </div>
+  </details>
+
+
+</section>
+<section id="paper" class="rule">
+  <p class="kicker">From the paper</p>
+  <details class="annex">
+    <summary><span class="srow"><span class="t">Pipeline overview</span><span class="hint">Fig. 2, three components</span><span class="chev" aria-hidden="true"></span></span></summary>
+    <div class="body">
+  <figure class="fig" id="fig2" style="margin-top:0">
+    <div class="plate pad"><img src="static/img/fig2_pipeline.svg?v=a70bfbe6" width="1005" height="531" alt="Pipeline: posed RGB-D frames feed segmentation and CLIP encoding, objectness-guided sampling and loss, and 3DGS optimization; detections are associated with existing nodes and rooms are segmented, producing an indexed semantic database, an indexed spatial tree, and a hierarchical scene graph." loading="lazy"></div>
+    <figcaption><b>Fig. 2.</b> SAM&nbsp;3 <span class="cite">[<a href="#ref-5">5</a>]</span> masks (concept prompt &ldquo;visible object&rdquo;) drive CLIP <span class="cite">[<a href="#ref-6">6</a>]</span> encoding and steer where new Gaussians are seeded; detections are associated by spatial and semantic similarity; rooms are segmented directly from the splats. Built on RTG-SLAM <span class="cite">[<a href="#ref-7">7</a>]</span>.</figcaption>
+  </figure>
+  <div class="cols3">
+    <div><h3><span class="dot" style="background:var(--green)"></span>Object-centric map</h3><p>An objectness weight <i>w</i>(<i>u</i>) = <i>M</i><sub>conf</sub>(<i>u</i>)<sup><i>γ</i></sup> + <i>β</i> decides where Gaussians are seeded and where the loss is applied. Submapping evicts out-of-view cells to RAM.</p></div>
+    <div><h3><span class="dot" style="background:var(--blue)"></span>Scene graph</h3><p>Detections match nodes by voxel overlap and CLIP similarity, each gated, then fuse by a confidence-weighted mean. Floors from the height histogram; rooms by watershed over an analytic wall map.</p></div>
+    <div><h3><span class="dot" style="background:var(--orange)"></span>Three indices</h3><p>Semantic: HNSW <span class="cite">[<a href="#ref-8">8</a>]</span> over embeddings. Spatial: R-tree <span class="cite">[<a href="#ref-9">9</a>]</span> over object boxes; <em>near</em>, <em>on</em>, <em>inside</em>, <em>above</em>, <em>below</em> computed on demand. Topological: the floor&ndash;room&ndash;object hierarchy. Composed by rules, or by an LLM planner for complex instructions.</p></div>
+  </div>
+
+    </div>
+  </details>
+  <details class="annex">
+    <summary><span class="srow"><span class="t">Benchmarks reported in the paper</span><span class="hint">Tables I–III, Fig. 3</span><span class="chev" aria-hidden="true"></span></span></summary>
+    <div class="body">
+  <div class="tablewrap" id="tab1">
+    <p class="tabcap"><b>Table I.</b> OpenLex3D <span class="cite">[<a href="#ref-10">10</a>]</span>, top-5, on Replica <span class="cite">[<a href="#ref-11">11</a>]</span> and HM3D <span class="cite">[<a href="#ref-12">12</a>]</span>. Synonym higher is better; the others lower is better. <span class="m-only">Visually-similar and clutter columns are hidden on small screens.</span> <b>Best</b>, <u>second</u> per dataset.</p>
+    <table class="data">
+      <thead><tr><th>Data</th><th class="l">Method</th><th class="m-hide">Online</th><th>Synonym&nbsp;<i>S</i>&nbsp;↑</th><th class="m-hide">Visually similar&nbsp;<i>VS</i>&nbsp;↓</th><th class="m-hide">Clutter&nbsp;<i>C</i>&nbsp;↓</th><th>Missing&nbsp;<i>M</i>&nbsp;↓</th><th>Incorrect&nbsp;<i>I</i>&nbsp;↓</th></tr></thead>
+      <tbody>
+        <tr class="ours"><th rowspan="8" class="ds">Replica</th><td class="l"><span class="brand-cell"><img src="static/img/mark.svg?v=ff5b5181" width="11" height="11" alt="">GSSG</span> (ours)</td><td class="m-hide">online</td><td><b>0.46</b></td><td class="m-hide"><u>0.06</u></td><td class="m-hide"><u>0.16</u></td><td>0.25</td><td><b>0.06</b></td></tr>
+        <tr><td class="l">HOV-SG <span class="cite">[<a href="#ref-13">13</a>]</span></td><td class="m-hide">&ndash;</td><td><u>0.45</u></td><td class="m-hide"><b>0.05</b></td><td class="m-hide">0.27</td><td>0.07</td><td>0.16</td></tr>
+        <tr><td class="l">OpenScene <span class="cite">[<a href="#ref-14">14</a>]</span></td><td class="m-hide">&ndash;</td><td>0.44</td><td class="m-hide"><u>0.06</u></td><td class="m-hide">0.30</td><td>0.07</td><td>0.13</td></tr>
+        <tr><td class="l">OpenMask3D <span class="cite">[<a href="#ref-15">15</a>]</span></td><td class="m-hide">&ndash;</td><td>0.43</td><td class="m-hide">0.07</td><td class="m-hide">0.29</td><td>0.10</td><td><u>0.10</u></td></tr>
+        <tr><td class="l">ConceptGraphs <span class="cite">[<a href="#ref-16">16</a>]</span></td><td class="m-hide">&ndash;</td><td>0.41</td><td class="m-hide">0.11</td><td class="m-hide">0.24</td><td><u>0.02</u></td><td>0.21</td></tr>
+        <tr><td class="l">ConceptFusion <span class="cite">[<a href="#ref-17">17</a>]</span></td><td class="m-hide">online</td><td>0.32</td><td class="m-hide">0.09</td><td class="m-hide"><u>0.16</u></td><td><b>0.00</b></td><td>0.41</td></tr>
+        <tr><td class="l">Kassab <em>et al.</em> <span class="cite">[<a href="#ref-18">18</a>]</span></td><td class="m-hide">online</td><td>0.26</td><td class="m-hide"><u>0.06</u></td><td class="m-hide">0.26</td><td>0.12</td><td>0.30</td></tr>
+        <tr class="blockend"><td class="l">OpenGaussian <span class="cite">[<a href="#ref-19">19</a>]</span></td><td class="m-hide">&ndash;</td><td>0.30</td><td class="m-hide">0.11</td><td class="m-hide"><b>0.14</b></td><td>0.04</td><td>0.38</td></tr>
+        <tr class="ours"><th rowspan="8" class="ds">HM3D</th><td class="l"><span class="brand-cell"><img src="static/img/mark.svg?v=ff5b5181" width="11" height="11" alt="">GSSG</span> (ours)</td><td class="m-hide">online</td><td><b>0.50</b></td><td class="m-hide">0.04</td><td class="m-hide">0.13</td><td>0.11</td><td><u>0.21</u></td></tr>
+        <tr><td class="l">HOV-SG <span class="cite">[<a href="#ref-13">13</a>]</span></td><td class="m-hide">&ndash;</td><td><u>0.33</u></td><td class="m-hide"><b>0.01</b></td><td class="m-hide"><b>0.08</b></td><td>0.18</td><td>0.36</td></tr>
+        <tr><td class="l">ConceptGraphs <span class="cite">[<a href="#ref-16">16</a>]</span></td><td class="m-hide">&ndash;</td><td>0.27</td><td class="m-hide">0.03</td><td class="m-hide">0.12</td><td><u>0.08</u></td><td>0.47</td></tr>
+        <tr><td class="l">ConceptFusion <span class="cite">[<a href="#ref-17">17</a>]</span></td><td class="m-hide">online</td><td>0.23</td><td class="m-hide">0.03</td><td class="m-hide"><u>0.09</u></td><td><u>0.08</u></td><td>0.57</td></tr>
+        <tr><td class="l">Kassab <em>et al.</em> <span class="cite">[<a href="#ref-18">18</a>]</span></td><td class="m-hide">online</td><td>0.19</td><td class="m-hide"><b>0.01</b></td><td class="m-hide">0.15</td><td>0.23</td><td>0.41</td></tr>
+        <tr><td class="l">OpenScene <span class="cite">[<a href="#ref-14">14</a>]</span></td><td class="m-hide">&ndash;</td><td>0.18</td><td class="m-hide"><u>0.02</u></td><td class="m-hide">0.16</td><td><b>0.06</b></td><td>0.59</td></tr>
+        <tr><td class="l">OpenMask3D <span class="cite">[<a href="#ref-15">15</a>]</span></td><td class="m-hide">&ndash;</td><td>0.15</td><td class="m-hide"><b>0.01</b></td><td class="m-hide">0.13</td><td>0.26</td><td><b>0.13</b></td></tr>
+        <tr><td class="l">OpenGaussian <span class="cite">[<a href="#ref-19">19</a>]</span></td><td class="m-hide">&ndash;</td><td>0.11</td><td class="m-hide"><u>0.02</u></td><td class="m-hide">0.11</td><td>0.11</td><td>0.63</td></tr>
+      </tbody>
+    </table>
+    <p class="tabnote">Weakest metric: the Replica missing rate, since only objects that pass the confidence and association gates are instantiated. Numbers include the calibration pass (Ablation&nbsp;B).</p>
+  </div>
+  <div class="tablewrap narrow" id="tab2seg" style="margin-top:28px">
+        <p class="tabcap"><b>Table II.</b> Segmentation backend: SAM&nbsp;3 vs. SAM ViT-H <span class="cite">[<a href="#ref-20">20</a>]</span>, uncalibrated scores. With SAM ViT-H, GSSG still attains the highest <i>S</i> on HM3D and remains the best online method on Replica.</p>
+        <table class="data">
+          <thead><tr><th class="l">Dataset</th><th class="l">Backend</th><th><i>S</i>&nbsp;↑</th><th><i>I</i>&nbsp;↓</th><th><i>M</i>&nbsp;↓</th><th>FPS&nbsp;↑</th></tr></thead>
+          <tbody>
+            <tr><td class="l" rowspan="2">Replica</td><td class="l">SAM 3</td><td>0.437</td><td>0.082</td><td>0.255</td><td>6.15</td></tr>
+            <tr class="blockend"><td class="l">SAM ViT-H</td><td>0.398</td><td>0.163</td><td>0.156</td><td>0.75</td></tr>
+            <tr><td class="l" rowspan="2">HM3D</td><td class="l">SAM 3</td><td>0.417</td><td>0.286</td><td>0.113</td><td>4.81</td></tr>
+            <tr><td class="l">SAM ViT-H</td><td>0.394</td><td>0.297</td><td>0.087</td><td>0.80</td></tr>
+          </tbody>
+        </table>
+  </div>
+
+  <div class="grid2" style="align-items:start;margin-top:40px">
+    <figure class="fig" id="fig3" style="margin-top:0">
+      <div class="plate pad chartbox" id="chart-scaling" role="img" aria-label="GPU memory in GB against stream frame. Without submapping (blue) memory rises to over 15 GB and the run aborts near frame 1300, marked with a red cross. With submapping (green) memory stays between about 6 and 8.5 GB."></div>
+      <div class="legend"><span><span class="sw" style="background:#0088FF"></span>No Submapping</span><span><span class="sw" style="background:#34C759"></span>Submapping</span><span><span style="color:#FF2D55;font-weight:700">&times;</span>&nbsp;Out of Memory</span></div>
+      <figcaption><b>Fig. 3.</b> GPU memory under live replay of a multi-room ZED&nbsp;2i scan. Without submapping (blue) an allocation fails (<span style="color:var(--red);font-weight:600">&times;</span>) and the mapper aborts; with submapping (green) the replay completes, at 1.2&nbsp;FPS against 4.8&nbsp;FPS. Query latency: at 10<sup>6</sup> objects (synthetic extension) HNSW answers in 0.34&nbsp;ms median, an exhaustive scan in 46&ndash;219&nbsp;ms; recall@5 above 0.87 at realistic sizes.</figcaption>
+    </figure>
+    <div class="tablewrap" id="tab3" style="margin-top:0">
+      <p class="tabcap"><b>Table III.</b> Query grounding in a 10-room simulated apartment <span class="cite">[<a href="#ref-21">21</a>]</span>, GSSG vs. Clio <span class="cite">[<a href="#ref-22">22</a>]</span> on the same recording. 25 basic (CLIP retrieval) and 16 complex (LLM planner) queries; success within the radius of a ground-truth instance.</p>
+      <table class="data">
+        <thead><tr><th class="l">Query</th><th class="l">Method</th><th>@0.5&nbsp;m</th><th>@1.0&nbsp;m</th><th>Med. err.</th></tr></thead>
+        <tbody>
+          <tr><td class="l" rowspan="2">Basic</td><td class="l">Clio</td><td>28%</td><td>44%</td><td>0.16 m</td></tr>
+          <tr class="ours blockend"><td class="l">GSSG</td><td><b>48%</b></td><td><b>56%</b></td><td><b>0.10 m</b></td></tr>
+          <tr><td class="l" rowspan="2">Complex</td><td class="l">Clio</td><td>12%</td><td>25%</td><td>0.15 m</td></tr>
+          <tr class="ours"><td class="l">GSSG + LLM</td><td><b>56%</b></td><td><b>81%</b></td><td><b>0.08 m</b></td></tr>
+        </tbody>
+      </table>
+      </div>
+  </div>
+    </div>
+  </details>
+</section>
+<section id="references" class="rule refs">
+  <p class="kicker">References</p>
+  <ol>
+<li id="ref-1">W. Liang, Y. Zhang, Y. Kwon, S. Yeung, and J. Zou, “Mind the Gap: Understanding the Modality Gap in Multi-modal Contrastive Representation Learning,” in NeurIPS, 2022.</li>
+<li id="ref-2">O. Russakovsky, et al., “ImageNet Large Scale Visual Recognition Challenge,” IJCV, 2015.</li>
+<li id="ref-3">Y. Zhou, J. Ren, F. Li, R. Zabih, and S.-N. Lim, “Test-Time Distribution Normalization for Contrastively Learned Vision-language Models,” in NeurIPS, 2023.</li>
+<li id="ref-4">S. Sato, H. Kiyama, T. Hirasawa, and M. Komachi, “When Modality Gap Reduction Fails: Prediction-Level Hubness in CLIP,” arXiv, 2026.</li>
+<li id="ref-5">N. Carion et al., “SAM 3: Segment Anything with Concepts,” arXiv, 2025.</li>
+<li id="ref-6">A. Radford, et al., “Learning Transferable Visual Models From Natural Language Supervision,” arXiv, 2021.</li>
+<li id="ref-7">Z. Peng, et al., “RTG-SLAM: Real-time 3D Reconstruction at Scale using Gaussian Splatting,” in ACM SIGGRAPH, 2024.</li>
+<li id="ref-8">Y. A. Malkov and D. A. Yashunin, “Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs,” IEEE TPAMI, 2020.</li>
+<li id="ref-9">A. Guttman, “R-trees: a dynamic index structure for spatial searching,” SIGMOD Rec., 1984.</li>
+<li id="ref-10">C. Kassab, et al., “OpenLex3D: A Tiered Evaluation Benchmark for Open-Vocabulary 3D Scene Representations,” in NeurIPS, Datasets and Benchmarks Track, 2025.</li>
+<li id="ref-11">J. Straub, et al., “The Replica Dataset: A Digital Replica of Indoor Spaces,” arXiv, 2019.</li>
+<li id="ref-12">S. K. Ramakrishnan, et al., “Habitat-Matterport 3D Dataset (HM3D): 1000 Large-scale 3D Environments for Embodied AI,” arXiv, 2021.</li>
+<li id="ref-13">A. Werby, C. Huang, M. Büchner, A. Valada, and W. Burgard, “Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation,” in RSS, 2024.</li>
+<li id="ref-14">S. Peng, K. Genova, C. M. Jiang, A. Tagliasacchi, M. Pollefeys, and T. Funkhouser, “OpenScene: 3D Scene Understanding with Open Vocabularies,” in IEEE/CVF CVPR, 2023.</li>
+<li id="ref-15">A. Takmaz, E. Fedele, R. W. Sumner, M. Pollefeys, F. Tombari, and F. Engelmann, “OpenMask3D: Open-Vocabulary 3D Instance Segmentation,” in NeurIPS, 2023.</li>
+<li id="ref-16">Q. Gu, et al., “ConceptGraphs: Open-vocabulary 3D scene graphs for perception and planning,” in IEEE ICRA, 2024.</li>
+<li id="ref-17">K. M. Jatavallabhula, et al., “ConceptFusion: Open-set Multimodal 3D Mapping,” RSS, 2023.</li>
+<li id="ref-18">C. Kassab et al., “The Bare Necessities: Designing Simple, Effective Open-Vocabulary Scene Graphs,” arXiv, 2024.</li>
+<li id="ref-19">Y. Wu, et al., “OpenGaussian: Towards Point-Level 3D Gaussian-based Open Vocabulary Understanding,” in NeurIPS, 2024.</li>
+<li id="ref-20">A. Kirillov et al., “Segment Anything,” arXiv, 2023.</li>
+<li id="ref-21">SpatialVerse Research Team, Manycore Tech Inc., “InteriorAgent: Interactive USD Interior Scenes for Isaac Sim-based Simulation,” <a href="https://huggingface.co/datasets/spatialverse/InteriorAgent">https://huggingface.co/datasets/spatialverse/InteriorAgent</a>, 2025.</li>
+<li id="ref-22">D. Maggio, et al., “Clio: Real-time Task-Driven Open-Set 3D Scene Graphs,” IEEE RA-L, 2024.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p><img src="static/img/mark.svg?v=ff5b5181" width="12" height="12" alt="" style="display:inline;vertical-align:-1px;margin-right:6px">Anonymous project page for a paper under review.</p>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll("[data-compare]").forEach(function (root) {
+    var range = root.querySelector('input[type="range"]'), b = root.querySelector(".cmp-b"), bar = root.querySelector(".cmp-bar"), lblR = root.querySelector(".lbl.r");
+    function set(v) { b.style.clipPath = "inset(0 0 0 " + v + "%)"; bar.style.left = v + "%"; }
+    range.addEventListener("input", function () { set(range.value); });
+    set(range.value);
+    var box = root.closest(".cmpbox");
+    if (box) box.querySelectorAll(".chip").forEach(function (ch) {
+      ch.addEventListener("click", function () {
+        box.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", x === ch ? "true" : "false"); });
+        b.src = ch.dataset.swap; if (lblR) { lblR.textContent = ch.dataset.name; lblR.classList.toggle("brand", ch.classList.contains("brand")); }
+      });
+    });
+    if (!reduced && "IntersectionObserver" in window) {
+      var done = false;
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting || done) return; done = true;
+          var t0 = null; function step(ts) { if (!t0) t0 = ts; var k = Math.min(1, (ts - t0) / 1600); var v = 50 + 22 * Math.sin(k * Math.PI * 2) * (1 - k); range.value = v; set(v); if (k < 1) requestAnimationFrame(step); }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0.5 }).observe(root);
+    }
+  });
+  document.querySelectorAll("[data-planner]").forEach(function (root) {
+    var q = root.querySelector(".pl-q"), sq = root.querySelector(".scan-q"), steps = root.querySelectorAll(".pl-step"), text = "find the pillow on the sofa in the living room";
+    var dots = root.querySelector(".pl-dots"), lbl = root.querySelector(".pl-lbl"), bPlay = root.querySelector(".pl-play"), bPrev = root.querySelector(".pl-prev"), bNext = root.querySelector(".pl-next"), thinkT = root.querySelector(".pl-think-t");
+    // Agentic loop: the planner reasons, issues one or two tool calls, reads the results, reasons again.
+    var PH = [
+      { c: ["typing"], n: "instruction", d: 3200, q: "type", show: 0 },
+      { c: ["think"], n: "LLM reasoning", d: 1800, show: 0, tt: "reasoning" },
+      { c: ["s1"], n: "tool call: room lookup", d: 2600, show: 1, cur: [1] },
+      { c: ["think"], n: "LLM reasoning", d: 1800, show: 1, done: [1], tt: "reasoning" },
+      { c: ["s2", "s3"], n: "two tool calls issued together", d: 4200, show: 3, done: [1], cur: [2, 3], sq: ["\"sofa\"  in living room", "\"pillow\""] },
+      { c: ["think"], n: "LLM reasoning", d: 1800, show: 3, done: [1, 2, 3], tt: "reasoning" },
+      { c: ["s4"], n: "tool call: spatial check", d: 3000, show: 4, done: [1, 2, 3], cur: [4], sq: ["\"pillow\""] },
+      { c: ["think"], n: "LLM reasoning", d: 1500, show: 4, done: [1, 2, 3, 4], tt: "reasoning" },
+      { c: ["s5"], n: "tool call: navigate", d: 3000, show: 5, done: [1, 2, 3, 4], cur: [5], sq: ["\"pillow\""] },
+      { c: ["done"], n: "grounded and reached", d: 4500, show: 5, done: [1, 2, 3, 4, 5], sq: ["\"pillow\""] }
+    ];
+    var ALL = ["typing", "think", "s1", "s2", "s3", "s4", "s5", "done"];
+    var timers = [], idx = -1, playing = true, visible = false;
+    PH.forEach(function (ph, i) { var d = document.createElement("button"); d.type = "button"; d.className = "pl-dot" + (ph.c[0] === "think" ? " thin" : ""); d.setAttribute("aria-label", ph.n); dots.appendChild(d); });
+    var dotEls = dots.querySelectorAll(".pl-dot");
+    function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function clear() { timers.forEach(clearTimeout); timers = []; }
+    function type(el, str, dt, t0) { t0 = t0 || 0; for (var c = 1; c <= str.length; c++) (function (c) { at(t0 + c * dt, function () { el.textContent = str.slice(0, c); }); })(c); return t0 + str.length * dt; }
+    function go(i) {
+      clear(); idx = (i + PH.length) % PH.length; var ph = PH[idx];
+      ALL.forEach(function (x) { root.classList.remove(x); }); ph.c.forEach(function (x) { root.classList.add(x); });
+      dotEls.forEach(function (d, k) { d.classList.toggle("on", k === idx); d.classList.toggle("past", k < idx); }); lbl.textContent = ph.n;
+      if (ph.tt) thinkT.textContent = ph.tt;
+      steps.forEach(function (st, k) { var n = k + 1; st.classList.toggle("vis", n <= ph.show); st.classList.toggle("on", (ph.done || []).indexOf(n) >= 0); st.classList.toggle("cur", (ph.cur || []).indexOf(n) >= 0); });
+      if (ph.q === "type") type(q, text, 42); else q.textContent = text;
+      if (ph.sq) { if (ph.c[0] === "s2") { sq.textContent = ""; var t1 = type(sq, ph.sq[0], 60); at(t1 + 1300, function () { sq.textContent = ""; type(sq, ph.sq[1], 60); }); } else sq.textContent = ph.sq[ph.sq.length - 1]; } else sq.textContent = "";
+      if (playing && visible) at(ph.d, function () { go(idx + 1); });
+    }
+    var ICO_PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="currentColor"/></svg>', ICO_PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" fill="currentColor"/></svg>';
+    function setPlaying(p) { playing = p; bPlay.innerHTML = p ? ICO_PAUSE : ICO_PLAY; bPlay.setAttribute("aria-label", p ? "Pause" : "Play"); if (p && visible) go(idx < 0 ? 0 : idx); else clear(); }
+    bPlay.addEventListener("click", function () { setPlaying(!playing); });
+    bPrev.addEventListener("click", function () { setPlaying(false); go(idx - 1); });
+    bNext.addEventListener("click", function () { setPlaying(false); go(idx + 1); });
+    dotEls.forEach(function (d, k) { d.addEventListener("click", function () { setPlaying(false); go(k); }); });
+    if (reduced) { playing = false; visible = true; go(PH.length - 1); setPlaying(false); return; }
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) { visible = e.isIntersecting; if (visible) { if (playing) { clear(); at(1500, function () { go(idx < 0 ? 0 : idx); }); } } else clear(); }); }, { threshold: 0.3 }).observe(root);
+    } else { visible = true; go(0); }
+  });
+  document.querySelectorAll("[data-demo]").forEach(function (root) {
+    var n = +root.dataset.frames, tpl = root.dataset.src, img = root.querySelector(".demo-frame"),
+        tgt = root.querySelector(".demo-target"), time = root.querySelector(".demo-time"),
+        s1 = root.querySelector(".s1"), s2 = root.querySelector(".s2"), s3 = root.querySelector(".s3"), q = s1.querySelector(".bubble");
+    var src = function (i) { return tpl.replace("{n}", String(i).padStart(2, "0")); };
+    var frames = null; function preload() { if (frames) return; frames = []; for (var i = 0; i < n; i++) { var im = new Image(); im.src = src(i); frames.push(im); } }
+    var text = "find a black bin", bPlay = root.querySelector(".d-play"), bRestart = root.querySelector(".d-restart");
+    var ICO_PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="currentColor"/></svg>', ICO_PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" fill="currentColor"/></svg>';
+    // Timeline of (ms, fn) events; playback is resumable from any elapsed offset.
+    var events = [], total = 0;
+    (function build() {
+      var t = 400, ev = function (ms, fn) { events.push([ms, fn]); };
+      ev(0, function () { root.classList.remove("p1", "p2", "p3", "p4"); q.textContent = ""; img.src = src(0); time.textContent = "t = 5 s"; root.classList.add("p1"); });
+      for (var c = 1; c <= text.length; c++) (function (c) { ev(t, function () { q.textContent = text.slice(0, c); }); t += 55; })(c);
+      t += 700; ev(t, function () { root.classList.add("p2"); });
+      t += 1100; ev(t, function () { root.classList.add("p3"); });
+      for (var i = 1; i < n; i++) (function (i) { ev(t, function () { img.src = src(i); time.textContent = "t = " + (5 + i * 0.5).toFixed(0) + " s"; }); t += 130; })(i);
+      ev(t, function () { root.classList.add("p4"); });
+      total = t + 3000;
+    })();
+    var timers = [], startedAt = null, elapsed = 0, paused = false, visible = false;
+    function stop() { if (startedAt !== null) { elapsed = Date.now() - startedAt; startedAt = null; } timers.forEach(clearTimeout); timers = []; }
+    function apply(upto) { events.forEach(function (e) { if (e[0] <= upto) e[1](); }); }
+    function run() {
+      if (startedAt !== null) return;
+      if (elapsed >= total) elapsed = 0;
+      apply(elapsed); startedAt = Date.now() - elapsed;
+      events.forEach(function (e) { if (e[0] > elapsed) timers.push(setTimeout(e[1], e[0] - elapsed)); });
+      timers.push(setTimeout(function () { stop(); elapsed = 0; if (!paused && visible) run(); }, total - elapsed));
+    }
+    function setPaused(p) { paused = p; bPlay.innerHTML = p ? ICO_PLAY : ICO_PAUSE; bPlay.setAttribute("aria-label", p ? "Play" : "Pause"); if (p) stop(); else if (visible) run(); }
+    bPlay.addEventListener("click", function () { setPaused(!paused); });
+    bRestart.addEventListener("click", function () { stop(); elapsed = 0; paused = false; bPlay.innerHTML = ICO_PAUSE; bPlay.setAttribute("aria-label", "Pause"); preload(); visible = true; run(); });
+    if (reduced) { img.src = src(n - 1); root.classList.add("p1", "p2", "p3", "p4"); q.textContent = text; time.textContent = "t = 37 s"; bPlay.disabled = true; return; }
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) preload(); }); }, { rootMargin: "900px 0px" }).observe(root);
+      new IntersectionObserver(function (es) { es.forEach(function (e) { visible = e.isIntersecting; if (visible) { preload(); if (!paused) run(); } else stop(); }); }, { threshold: 0.35 }).observe(root);
+    } else { visible = true; preload(); run(); }
+  });
+  document.querySelectorAll("[data-video]").forEach(function (v) {
+    v.addEventListener("click", function () {
+      var open = v.getAttribute("aria-expanded") === "true";
+      v.setAttribute("aria-expanded", open ? "false" : "true");
+      var url = v.dataset.embed;
+      if (!open && url && !v.querySelector("iframe")) {
+        var f = document.createElement("iframe"); f.src = url + (url.indexOf("?") > 0 ? "&" : "?") + "autoplay=1"; f.title = "GSSG video"; f.allow = "autoplay; fullscreen"; f.allowFullscreen = true;
+        v.innerHTML = ""; v.appendChild(f);
+      }
+    });
+  });
+  (function () {
+    var box = document.getElementById("chart-scaling"); if (!box) return;
+    var D = {"off":[[0,6.68],[10,6.97],[20,6.86],[30,7.3],[40,7.15],[50,7.28],[60,7.02],[70,7.18],[80,7.16],[90,7.34],[100,7.28],[132,7.54],[142,7.67],[152,7.75],[162,7.84],[174,8.09],[184,8.16],[196,8.09],[234,8.14],[250,8.1],[264,8.0],[276,8.05],[297,8.19],[312,8.74],[322,9.31],[332,9.59],[344,9.67],[356,9.65],[369,9.17],[382,9.0],[392,9.32],[453,9.54],[464,10.06],[478,10.09],[490,9.72],[500,9.13],[557,8.81],[567,8.36],[577,8.29],[587,8.34],[597,8.81],[659,9.08],[672,9.37],[682,9.33],[692,9.42],[702,8.89],[763,9.06],[775,8.86],[791,9.27],[806,9.13],[818,9.77],[833,9.69],[849,9.85],[864,9.57],[887,9.78],[897,9.36],[937,9.15],[950,9.11],[960,9.12],[970,9.23],[983,9.64],[996,9.79],[1071,9.97],[1081,10.33],[1091,10.43],[1101,10.53],[1164,10.73],[1176,11.07],[1190,11.39],[1202,11.4],[1216,11.64],[1226,12.2],[1243,12.46],[1254,12.51],[1270,13.14]],"on":[[0,6.34],[10,6.28],[20,6.23],[30,6.65],[40,6.33],[50,6.55],[62,6.73],[79,6.93],[100,6.8],[140,6.91],[168,6.92],[182,6.72],[195,6.68],[212,6.81],[237,7.03],[290,7.53],[340,7.74],[424,7.67],[505,7.43],[556,7.05],[566,6.37],[582,6.27],[593,6.4],[609,6.56],[626,6.91],[641,7.02],[666,6.97],[694,7.06],[722,7.0],[777,7.16],[794,7.18],[823,7.52],[857,7.45],[896,7.94],[988,7.68],[1100,8.01],[1179,8.1],[1254,8.33],[1364,8.04]],"oom":[1300,15.27]};
+    var NS = "http://www.w3.org/2000/svg", tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
+    function el(t, a, par) { var n = document.createElementNS(NS, t); for (var k in a) n.setAttribute(k, a[k]); if (par) par.appendChild(n); return n; }
+    function txt(par, x, y, str, a) { var t = el("text", Object.assign({ x: x, y: y, fill: "#6e6e73", "font-size": 12, "font-family": "Inter, sans-serif" }, a || {}), par); t.textContent = str; return t; }
+    function draw() {
+      var w = Math.max(320, box.clientWidth - 36), h = Math.round(w * 0.5);
+      box.innerHTML = ""; var s = el("svg", { viewBox: "0 0 " + w + " " + h, width: "100%", height: h }, box); s.style.display = "block";
+      var L = 44, R = 14, T = 14, B = 40, xm = 1400, ym = 16;
+      var x = function (f) { return L + f / xm * (w - L - R); }, y = function (g) { return T + (1 - g / ym) * (h - T - B); };
+      for (var g = 0; g <= ym; g += 4) { el("line", { x1: L, x2: w - R, y1: y(g), y2: y(g), stroke: "#e5e5ea" }, s); txt(s, L - 8, y(g) + 4, g, { "text-anchor": "end" }); }
+      for (var f = 0; f <= xm; f += 350) txt(s, x(f), h - 18, f, { "text-anchor": "middle" });
+      el("line", { x1: L, x2: w - R, y1: y(0), y2: y(0), stroke: "#d2d2d7" }, s);
+      txt(s, (L + w - R) / 2, h - 2, "Frame", { "text-anchor": "middle", fill: "#424245" });
+      var yl = txt(s, 0, 0, "GPU Memory (GB)", { "text-anchor": "middle", fill: "#424245" }); yl.setAttribute("transform", "translate(12 " + (T + (h - T - B) / 2) + ") rotate(-90)");
+      var path = function (pts) { return pts.map(function (p, i) { return (i ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1); }).join(" "); };
+      el("path", { d: path(D.off), fill: "none", stroke: "#0088FF", "stroke-width": 2.4, "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+      var lo = D.off[D.off.length - 1]; el("line", { x1: x(lo[0]), y1: y(lo[1]), x2: x(D.oom[0]), y2: y(D.oom[1]), stroke: "#0088FF", "stroke-width": 2.4, "stroke-linecap": "round" }, s);
+      var ox = x(D.oom[0]), oy = y(D.oom[1]); el("path", { d: "M" + (ox - 6) + " " + (oy - 6) + "L" + (ox + 6) + " " + (oy + 6) + "M" + (ox - 6) + " " + (oy + 6) + "L" + (ox + 6) + " " + (oy - 6), stroke: "#FF2D55", "stroke-width": 3, "stroke-linecap": "round" }, s);
+      el("path", { d: path(D.on), fill: "none", stroke: "#34C759", "stroke-width": 2.4, "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+      var cross = el("line", { y1: T, y2: y(0), stroke: "#d2d2d7", "stroke-dasharray": "2 3", visibility: "hidden" }, s), d1 = el("circle", { r: 4, fill: "#0088FF", visibility: "hidden" }, s), d2 = el("circle", { r: 4, fill: "#34C759", visibility: "hidden" }, s);
+      var near = function (pts, f) { var b = pts[0]; pts.forEach(function (p) { if (Math.abs(p[0] - f) < Math.abs(b[0] - f)) b = p; }); return b; };
+      var hit = el("rect", { x: L, y: T, width: w - L - R, height: y(0) - T, fill: "transparent" }, s);
+      hit.addEventListener("mousemove", function (e) {
+        var r = s.getBoundingClientRect(), f = Math.round(((e.clientX - r.left) * (w / r.width) - L) / (w - L - R) * xm);
+        var po = near(D.off, f), pn = near(D.on, f), alive = f <= D.oom[0] + 30;
+        cross.setAttribute("x1", x(f)); cross.setAttribute("x2", x(f)); cross.setAttribute("visibility", "visible");
+        d1.setAttribute("visibility", alive ? "visible" : "hidden"); d1.setAttribute("cx", x(po[0])); d1.setAttribute("cy", y(po[1]));
+        d2.setAttribute("visibility", "visible"); d2.setAttribute("cx", x(pn[0])); d2.setAttribute("cy", y(pn[1]));
+        tip.innerHTML = "frame ≈ " + f + "<br><span style=\"color:#0088FF\">■</span> No Submapping: " + (alive ? po[1].toFixed(1) + " GB" : "out of memory") + "<br><span style=\"color:#34C759\">■</span> Submapping: " + pn[1].toFixed(1) + " GB";
+        tip.hidden = false; tip.style.left = (e.clientX + 14) + "px"; tip.style.top = (e.clientY + 14) + "px";
+      });
+      hit.addEventListener("mouseleave", function () { cross.setAttribute("visibility", "hidden"); d1.setAttribute("visibility", "hidden"); d2.setAttribute("visibility", "hidden"); tip.hidden = true; });
+    }
+    draw(); var to; window.addEventListener("resize", function () { clearTimeout(to); to = setTimeout(draw, 120); });
+  })();
+  document.querySelectorAll(".pl-card").forEach(function (d) { var c = d.querySelector(".pl-card-cta"), tt = c.querySelector(".cta-t"); d.addEventListener("toggle", function () { tt.textContent = d.open ? c.dataset.close : c.dataset.open; }); });
+  document.querySelectorAll("[data-fs]").forEach(function (el) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "fs-btn"; b.setAttribute("aria-label", "Full screen"); b.innerHTML = "&#x26F6;"; el.appendChild(b);
+    function on() { return el.classList.contains("fs"); }
+    function set(v) { el.classList.toggle("fs", v); document.body.classList.toggle("has-fs", v); b.innerHTML = v ? "&#x2715;" : "&#x26F6;"; b.setAttribute("aria-label", v ? "Exit full screen" : "Full screen"); window.dispatchEvent(new Event("resize")); }
+    b.addEventListener("click", function () {
+      if (!on() && el.requestFullscreen && !/Mobi|Android/i.test(navigator.userAgent)) { var pr = el.requestFullscreen(); if (pr && pr.catch) pr.catch(function () { set(true); }); } else if (document.fullscreenElement === el) { document.exitFullscreen(); } else set(!on());
+    });
+    document.addEventListener("fullscreenchange", function () { set(document.fullscreenElement === el); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && on() && !document.fullscreenElement) set(false); });
+  });
+  function reveal() { var t = location.hash && document.getElementById(location.hash.slice(1)); var d = t && t.closest("details"); if (d) d.open = true; }
+  window.addEventListener("hashchange", reveal);
+  reveal();
+});
+</script>
+</body>
+</html>
